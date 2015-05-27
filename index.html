@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style type="text/css">
+    input {
+      width: 10em;
+    }
+  </style>
+  <script>
+
+    var positions = []
+    var boids = []
+
+    function requestParameters() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "/parameters");
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+          parameters = JSON.parse(xhr.responseText);
+          fields = ['CenterOfMass', 'Separation', 'MatchVelocity',
+                    'TendToPlace'];
+          for (i = 0; i < fields.length; i++) {
+            field = document.getElementById(fields[i]);
+            field.value = parameters[fields[i]];
+          }
+        }
+      }
+      xhr.send();
+    }
+
+    function resetParameters() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("PUT", "/parameters/reset");
+      xhr.send();
+      requestParameters();
+    }
+
+    function submitParameters() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/parameters");
+      xhr.setRequestHeader("Content-type", "application/json");
+      fields = ['CenterOfMass', 'Separation', 'MatchVelocity',
+                'TendToPlace'];
+      parameters = {};
+      for (i = 0; i < fields.length; i++) {
+        field = document.getElementById(fields[i]);
+        parameters[fields[i]] = Number(field.value);
+      }
+      xhr.send(JSON.stringify(parameters));
+    }
+
+    function requestPositions() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "/boids");
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+          positions = JSON.parse(xhr.responseText);
+          setTimeout("requestPositions()", 10);
+        }
+      }
+      xhr.send();
+    }
+
+    function animationStep() {
+      while (boids.length < positions.length) {
+        var div = document.createElement("div");
+        div.innerHTML = "x";
+        div.style.position = "absolute";
+        document.body.appendChild(div);
+        boids.push(div);
+      }
+
+      if (boids.length > 0) {
+        boids[0].style.color = "red";
+      }
+
+      for (i = 0; i < positions.length; ++i) {
+        var x = Number(positions[i]["X"])*window.innerWidth;
+        var y = Number(positions[i]["Y"])*window.innerHeight;
+        boids[i].style.transform = "translate(" + String(x) + "px," +
+                                   String(y) + "px)";
+      }
+
+      window.requestAnimationFrame(animationStep);
+    }
+
+    requestParameters();
+    requestPositions();
+    window.requestAnimationFrame(animationStep);
+
+  </script>
+</head>
+<body>
+  <div>
+    <div>
+      <label for="name">Center Of Mass:</label>
+      <input type="text" id="CenterOfMass" />
+    </div>
+    <div>
+      <label for="name">Separation:</label>
+      <input type="text" id="Separation" />
+    </div>
+    <div>
+      <label for="name">Match Velocity:</label>
+      <input type="text" id="MatchVelocity" />
+    </div>
+    <div>
+      <label for="name">Tend to Place:</label>
+      <input type="text" id="TendToPlace" />
+    </div>
+    <div>
+      <button id="ResetParameters" onclick="resetParameters()">Reset</button>
+      <button id="SubmitParameters" onclick="submitParameters()">Submit</button>
+    </div>
+  </div>
+</body>
+</html>
