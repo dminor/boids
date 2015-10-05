@@ -9,6 +9,19 @@ type Boid struct {
 	X_dot, Y_dot float64
 }
 
+func (boid *Boid) Coord(dim int) float64 {
+	switch dim {
+	case 0:
+		return boid.X
+	default:
+		return boid.Y
+	}
+}
+
+func (boid *Boid) Dim() int {
+	return 2
+}
+
 func (self *Boid) Initialize(x, y, sigma float64) {
 	self.X = rand.NormFloat64()*sigma + x
 	self.Y = rand.NormFloat64()*sigma + y

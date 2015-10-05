@@ -2,6 +2,7 @@ package main
 
 import (
 	"./boid"
+	"./kdtree"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -20,7 +21,7 @@ type Parameters struct {
 }
 
 var defaultParameters = Parameters{
-	0.0007,
+	0.007,
 	0.0001,
 	0.03,
 	0.6, 0.6, 0.0001,
@@ -35,12 +36,24 @@ func updatePositions() {
 	for {
 
 		// calculate new velocities
-		// TODO: we should only consider k nearest neighbours rather than all
-		// boids when doing these calculations
+		points := make([]kdtree.Point, len(theBoids))
+		for i, v := range theBoids {
+			points[i] = kdtree.Point(v)
+		}
+
+		kd := kdtree.Build(points)
+
 		for i := range theBoids {
-			theBoids[i].CenterOfMass(theBoids, parameters.CenterOfMass)
-			theBoids[i].Separation(theBoids, parameters.Separation)
-			theBoids[i].MatchVelocity(theBoids, parameters.MatchVelocity)
+			points := kd.KNearestNeighbour(theBoids[i], 7)
+
+			boids := make([]*boid.Boid, len(points))
+			for i, v := range points {
+				boids[i] = v.(*boid.Boid)
+			}
+
+			theBoids[i].CenterOfMass(boids, parameters.CenterOfMass)
+			theBoids[i].Separation(boids, parameters.Separation)
+			theBoids[i].MatchVelocity(boids, parameters.MatchVelocity)
 			theBoids[i].TendToPlace(parameters.TendToPlaceX,
 				parameters.TendToPlaceY,
 				parameters.TendToPlace)
